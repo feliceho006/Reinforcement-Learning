@@ -1,5 +1,5 @@
 import gym
-from gym.spaces import Box
+from gym.spaces import Box, Discrete
 import numpy as np
 import torch
 from torchvision import transforms as T
@@ -105,3 +105,24 @@ class ActionWrapper(gym.ActionWrapper):
             return random.choice([0, 1, 2])
         else:
             return action
+
+# reduce the action space with a wrapper
+class DiscreteWrapper(gym.Wrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.env = env
+        self.__actions__ = [(-1, 0.2, 0.), (0, 0.2, 0.), (1, 0.2, 0.),
+                            (-1, 0.5, 0.), (0, 0.5, 0.), (1, 0.5, 0.), #           Action Space Structure
+                            (-1, 1,   0), (0, 1,   0), (1, 1,   0), #        (Steering Wheel, Gas, Break)
+                            (-1, 0, 0.8), (0, 0, 0.8), (1, 0, 0.8), # Range        -1~1       0~1   0~1
+                            (-1, 0, 0.3), (0, 0, 0.3), (1, 0, 0.3),
+                            (-1, 0,   0), (0, 0,   0), (1, 0,   0)]
+
+        
+        self.action_space = Discrete(len(self.__actions__)-1)
+        
+    def step(self, action):
+        print(action)
+        next_state, reward, done, info = self.env.step(self.__actions__[action])
+        # modify ...
+        return next_state, reward, done, info
