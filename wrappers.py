@@ -12,7 +12,7 @@ class ObservationWrappers(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
         obs_shape = self.observation_space.shape[:2]
-        self.observation_space = Box(low=0, high=255, shape=obs_shape, dtype=np.uint8)
+        self.observation_space = Box(low=0, high=255, shape=(84,84), dtype=np.uint8)
         self.frames = []
 
     def permute_orientation(self, observation):
@@ -30,19 +30,22 @@ class ObservationWrappers(gym.ObservationWrapper):
         # transform = T.Grayscale()
         # observation = transform(observation)
         # cropped = observation[63:80, 24:73]
-        cropped = observation[:-12]
+        cropped = self.crop(observation)
 
         # fill the bottom of the image with black
-        
-        cropped = cv2.copyMakeBorder(cropped, 0, 12, 0, 0, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
+        # cropped = cv2.copyMakeBorder(cropped, 0, 12, 0, 0, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        # remove the bottom 12 pixels of the image
+
         # plt.imshow(cropped)
         # plt.show()
         # cropped = observation
         gray = cv2.cvtColor(cropped, cv2.COLOR_RGB2GRAY)
-        blur = self.blur_image(gray)
-        canny = self.canny_edge_detector(blur)
-
-        self.frames.append(canny)
+        # blur = self.blur_image(gray)
+        canny = self.canny_edge_detector(gray)
+        # gray = self.normalize(gray)
+        # self.frames.append(canny)
+        # print("Canny shape: ", canny.shape)
         # self.video.write(canny)
         # plt.imshow(canny, cmap="gray", vmin=0, vmax=255)
         # plt.show()
@@ -60,6 +63,13 @@ class ObservationWrappers(gym.ObservationWrapper):
         for i in range(len(self.frames)):
             self.video.write(self.frames[i])
         self.video.release()
+
+    def normalize(self, frame):
+        return frame / 255.0
+
+    def crop(self, frame):
+        # Crop to 84x84
+        return frame[:-12, 6:-6]
 
 
 # class ObservationWrapper(gym.ObservationWrapper):
@@ -95,13 +105,9 @@ class ResizeObservation(gym.ObservationWrapper):
         return observation
 
 
-class ActionWrapper(gym.ActionWrapper):
+class RewardWrapper(gym.RewardWrapper):
     def __init__(self, env):
         super().__init__(env)
 
-    def action(self, action):
-        return [1]
-        if action == 3:
-            return random.choice([0, 1, 2])
-        else:
-            return action
+    def reward(self, reward):
+        return np.clip(reward, a_min=-1.0, a_max=1.0) # from https://notanymike.github.io/Solving-CarRacing/
