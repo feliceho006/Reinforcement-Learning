@@ -33,8 +33,9 @@ class ObservationWrappers(gym.ObservationWrapper):
         cropped = observation[:-12]
 
         # fill the bottom of the image with black
-        
-        cropped = cv2.copyMakeBorder(cropped, 0, 12, 0, 0, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        cropped = cv2.copyMakeBorder(
+            cropped, 0, 12, 0, 0, cv2.BORDER_CONSTANT, value=[0, 0, 0]
+        )
         # plt.imshow(cropped)
         # plt.show()
         # cropped = observation
@@ -42,10 +43,10 @@ class ObservationWrappers(gym.ObservationWrapper):
         blur = self.blur_image(gray)
         canny = self.canny_edge_detector(blur)
 
-        self.frames.append(canny)
-        # self.video.write(canny)
-        # plt.imshow(canny, cmap="gray", vmin=0, vmax=255)
-        # plt.show()
+        # self.frames.append(canny)
+        # # self.video.write(canny)
+        # # plt.imshow(canny, cmap="gray", vmin=0, vmax=255)
+        # # plt.show()
         return canny
 
     def canny_edge_detector(self, observation):
