@@ -1,3 +1,5 @@
+models/
+venv/
 video/
 *.avi
 *.mp4
