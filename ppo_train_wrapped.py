@@ -1,5 +1,6 @@
 from math import fabs
 from custom_policies.CustomCnn import CustomCNN
+from space_wrappers.misc import StackObservationWrapper
 from utils import SaveOnBestTrainingRewardCallback
 import wrappers
 import gym
@@ -33,8 +34,14 @@ env.reset()
 # 1) GrayScale , 2) Blur, 3) Canny Edge Detector, 4) Crop
 wrapped_env = wrappers.ObservationWrappers(env)
 
+
+
 # 5) Action Wrapper
 wrapped_env = space_wrappers.DiscretizedActionWrapper(wrapped_env, 3)
+
+
+# Stack observations
+wrapped_env = StackObservationWrapper(wrapped_env, 5, 0)
 
 # Reward Wrapper
 wrapped_env = wrappers.RewardWrapper(wrapped_env)

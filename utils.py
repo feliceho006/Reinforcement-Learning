@@ -1,7 +1,10 @@
+import gym
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.results_plotter import load_results, ts2xy
 import numpy as np
 import os
+from stable_baselines3.common.utils import set_random_seed
+import wrappers
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
     Callback for saving a model (the check is done every ``check_freq`` steps)
@@ -45,3 +48,13 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                   self.model.save(self.save_path)
 
         return True
+
+def make_vec_env(env_id, rank, seed=0):
+    def _init():
+        env = gym.make(env_id)
+        env.seed(seed + rank)
+        env = wrappers.ObservationWrappers(env)
+        return env
+
+    set_random_seed(seed)
+    return _init
