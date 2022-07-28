@@ -3,3 +3,8 @@ venv/
 video/
 *.avi
 *.mp4
+
+
+logs/
+logs/.DS_Store
+tmp/*

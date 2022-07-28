@@ -49,12 +49,3 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
         return True
 
-def make_vec_env(env_id, rank, seed=0):
-    def _init():
-        env = gym.make(env_id)
-        env.seed(seed + rank)
-        env = wrappers.ObservationWrappers(env)
-        return env
-
-    set_random_seed(seed)
-    return _init

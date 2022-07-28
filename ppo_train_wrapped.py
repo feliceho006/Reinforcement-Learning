@@ -14,10 +14,14 @@ from gym.wrappers import RescaleAction, RecordVideo
 from torch import tensor
 import space_wrappers
 
+
+run = 4
+
+
 # Create folders to save the results and logs
-models_dir = "models/PPO/wrapped"
+models_dir = "models/PPO/wrapped_stacked_discrete"
 logdir = "logs"
-temp_log_dir = "tmp/no_canny"
+temp_log_dir = "tmp/wrapped_stacked_discrete/" 
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
 
@@ -27,7 +31,7 @@ if not os.path.exists(logdir):
 
 env_name = "CarRacing-v1"
 env = gym.make(env_name)
-env = Monitor(env, temp_log_dir)
+env = Monitor(env, temp_log_dir + f"{run}")
 env.reset()
 
 
@@ -41,18 +45,18 @@ wrapped_env = space_wrappers.DiscretizedActionWrapper(wrapped_env, 3)
 
 
 # Stack observations
-wrapped_env = StackObservationWrapper(wrapped_env, 5, 0)
+wrapped_env = StackObservationWrapper(wrapped_env, 4, 1)
 
 # Reward Wrapper
 wrapped_env = wrappers.RewardWrapper(wrapped_env)
 
 
-callback = SaveOnBestTrainingRewardCallback(check_freq=1000, log_dir=temp_log_dir)
-model = PPO("MlpPolicy", wrapped_env, ent_coef=0.01, verbose=1, tensorboard_log=logdir)
-# model = PPO.load(f"{temp_log_dir}/best_model.zip", env=wrapped_env)
+callback = SaveOnBestTrainingRewardCallback(check_freq=1000, log_dir=temp_log_dir+ run.__str__() + "/")
+# model = PPO("MlpPolicy", wrapped_env, ent_coef=0.01, verbose=1, tensorboard_log=logdir)
+model = PPO.load(f"{temp_log_dir}/{run-1}/best_model", env=wrapped_env)
 
 TIMESTEPS = 10000  # The number of env steps for each epoch
-epochs = 100  # Number of training iterations
+epochs = 80  # Number of training iterations
 
 # Train the agent
 for i in range(1, epochs):
@@ -60,8 +64,8 @@ for i in range(1, epochs):
     model.learn(
         total_timesteps=TIMESTEPS,
         reset_num_timesteps=False,
-        tb_log_name="PPO_wrapped_obs_action_discretized_uncanny",
-        callback=callback,
+        tb_log_name="PPO_wrapped_stacked_discrete_" + run.__str__(),
+        callback=callback
     )
     if i % 3 == 0:
         model.save(f"{models_dir}/{TIMESTEPS*i}")
@@ -88,15 +92,15 @@ for ep in range(episodes):
     accum_reward = 0
     done = False
     while not done:
-        # action, _ = model.predict(obs)  # action is a numpy array
-        action = wrapped_env.action_space.sample()
+        action, _ = model.predict(obs)  # action is a numpy array
+        # action = wrapped_env.action_space.sample()
 
         print(action)
 
         obs, reward, done, info = wrapped_env.step(action)
         accum_reward += reward
-        plt.imshow(obs, cmap="gray", vmin=0, vmax=255)
-        plt.title("Reward so far: " + str(accum_reward) + " |  Episode: " + str(ep))
-        plt.show()
-        # wrapped_env.render()
+        # plt.imshow(obs, cmap="gray", vmin=0, vmax=255)
+        # plt.title("Reward so far: " + str(accum_reward) + " |  Episode: " + str(ep))
+        # plt.show()
+        wrapped_env.render()
 wrapped_env.close()
